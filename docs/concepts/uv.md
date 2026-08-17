@@ -24,6 +24,32 @@ tool. It manages:
 | `uv init --python 3.12 --name <name> .` | Scaffold a new project in the current directory |
 | `uv add <package>` | Add a dependency, update `pyproject.toml` + `uv.lock`, install it |
 | `uv run <command>` | Run a command inside the project's managed virtual environment (creates it if missing) |
+| `uv sync` | Make `.venv` match `pyproject.toml`/`uv.lock` exactly (install missing, remove extraneous) |
+
+## `uv sync` — deterministic environment installs
+
+`uv sync` doesn't add or resolve anything new — it makes `.venv` match
+`pyproject.toml`/`uv.lock` exactly, installing what's missing and removing
+what shouldn't be there. npm comparison: it's `npm ci`, not `npm install` —
+the lockfile is the source of truth, not something to be updated.
+
+Where it fits with the commands above: `uv add` and `uv run` both call
+`sync` internally when needed (after adding a dependency, or before running
+if the lockfile changed) — `uv sync` is just the explicit, standalone form,
+useful when you want the environment updated without also running a
+command (e.g. in a Dockerfile, or after pulling someone else's lockfile
+changes).
+
+Flags used in this project's Dockerfile:
+
+- **`--locked`** — fail instead of silently re-resolving if `uv.lock` is
+  out of sync with `pyproject.toml`. A build should fail loudly rather than
+  drift to different dependency versions than what's committed.
+- **`--no-install-project`** — install only the dependencies, skip
+  installing our own code as a package. Used for Docker layer caching: sync
+  once with just `pyproject.toml`/`uv.lock` copied in (cached unless
+  dependencies change), then copy the actual source and `sync` again
+  (without the flag) to install the project itself.
 
 ## Running things: always `uv run`
 
