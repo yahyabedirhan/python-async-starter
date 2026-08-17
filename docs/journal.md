@@ -67,3 +67,67 @@ via uv instead of relying on the system's Python 3.9. Then
 Verified locally with `uv run fastapi run main.py --port 8000` +
 `curl http://127.0.0.1:8000/health`. See `docs/concepts/uv.md` and
 `docs/concepts/fastapi.md` for the tool-level notes.
+
+## 2026-08-18 — commit convention, source citation, doc style
+
+Set up `AGENTS.md` (with a `CLAUDE.md` symlink pointing to it) as a place
+for standing rules about how work on this project should be done. Three
+rules went in today:
+
+- **Commit messages** follow Conventional Commits prefixes (`feat:`,
+  `fix:`, etc.), a 50-character subject line, always lowercase (even for
+  names like "fastapi"), and optional dash-bulleted detail lines below a
+  blank line.
+- **Cite external sources.** Any time a recommendation comes from an
+  official doc, a blog post, or a tool like Context7, say so and link it,
+  so it can be checked or revisited later. If something instead comes from
+  general knowledge rather than a fetched source, say that too.
+- **Documentation style.** Write `docs/` content in plain, natural
+  sentences, like explaining something out loud to a person, not
+  compressed notes. Should be understandable even half-asleep.
+
+The citation rule came out of a real moment: a Dockerfile pattern was
+written without saying where it came from, and asking about it led to
+finding the actual source (uv's own Docker guide) after the fact instead of
+during. Better to cite as we go.
+
+## 2026-08-18 — Dockerfile built and tested
+
+Wrote a `Dockerfile` for the app, following the pattern documented in uv's
+own Docker guide (`docs.astral.sh/uv/guides/integration/docker`): install
+dependencies in one layer before copying the app's code, then install the
+project itself in a second layer. This keeps Docker's build cache useful —
+editing `main.py` doesn't force dependencies to reinstall on rebuild.
+
+The container runs as a non-root user (`appuser`, UID/GID 1000, pinned
+explicitly rather than left to whatever the system picks), following
+Docker's own best-practices page. Reasoning and the exact source are
+written up in `docs/concepts/docker.md`, along with a related question that
+came up: whether UIDs need to be unique across different projects/
+containers on the same machine (they don't — unlike a network port, a UID
+isn't an exclusive, shared resource).
+
+Built the image and ran it locally: `/health` responded correctly, and
+`docker exec ... id` confirmed the process really was running as the
+unprivileged user, not root.
+
+## 2026-08-18 — GitHub repo, README, progress tracker
+
+Created `docs/progress.md` as a plain checklist of what's done and what's
+left, separate from this journal (which is about *why*, not a status
+board). Phase 1 is tracked item-by-item; later phases are just short
+summaries for now.
+
+Created a public GitHub repository (`yahyabedirhan/python-async-starter`)
+and pushed the `main` branch to it.
+
+Wrote a short `README.md` for anyone landing on the repo for the first
+time. Went through a few rounds of trimming: the first sentence originally
+led with "this is a learning project," which got dropped in favor of just
+describing what the project demonstrates (FastAPI and asyncio) and what
+it's deployed with (Docker, Hetzner). The section listing the project's
+pieces was originally written as a phase-by-phase build sequence, which
+reads more like a progress report than a description of what's actually in
+the repository — changed it to a plain list of what's there instead, and
+moved the link to `docs/progress.md` under the Documentation section where
+it belongs.
