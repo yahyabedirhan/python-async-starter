@@ -51,10 +51,9 @@ services:
 
   This only matters when something other than you needs to bring the
   container back — a crash, or a reboot on a server nobody's watching. For
-  local dev, where you start/stop it yourself, it's a no-op: it's kept
-  here anyway so the local `compose.yaml` matches the shape of the Hetzner
-  one (added when that VM step happens), instead of the two files
-  diverging on a setting that matters there.
+  local dev, where you start/stop it yourself, it's a no-op: it's worth
+  keeping anyway, so a local file and a server-side file don't diverge on
+  a setting that matters once there's a real server involved.
 
 ## The commands
 
@@ -67,26 +66,25 @@ docker compose down            # stop and remove the container + network
 your terminal, which is useful while debugging. `-d` ("detached") runs it
 in the background instead, closer to how it'd run unattended on a server.
 
-## Why this project uses it
+## Why use it over plain `docker run`
 
-Two reasons, decided together — see `docs/journal.md` (2026-08-18 entry)
-for the full reasoning:
+Two situations where it earns its keep:
 
-1. **Locally**: it replaces retyping multi-flag `docker run` commands with
-   two short ones. The Dockerfile doesn't change at all — Compose just
-   orchestrates the same image it already builds.
-2. **On the Hetzner VM (planned)**: Phase 1 will run two containers that
-   need to coordinate — the app and Caddy as a reverse proxy in front of
-   it. Compose is a better fit than two independent `docker run` commands
-   for declaring how multiple containers run together (shared network,
-   restart policies), and makes redeploys a single command
-   (`docker compose up -d --build`) instead of a manual per-container
-   stop/rm/run sequence.
+1. **A single container, run repeatedly**: it replaces retyping multi-flag
+   `docker run` commands with two short ones. The Dockerfile doesn't
+   change at all — Compose just orchestrates the same image it already
+   builds.
+2. **Multiple containers that need to coordinate** — e.g. an app plus a
+   reverse proxy in front of it. Compose is a better fit than several
+   independent `docker run` commands for declaring how multiple containers
+   run together (shared network, restart policies), and makes redeploys a
+   single command (`docker compose up -d --build`) instead of a manual
+   per-container stop/rm/run sequence.
 
 ## One thing that doesn't change
 
-Secrets and environment-specific values (like the Hetzner VM's sslip.io
-domain, or a TLS contact email for Caddy) still shouldn't be hardcoded into
-the committed `compose.yaml`. Those belong in an untracked `.env` file or a
-VM-specific override — Compose supports both — the same way they'd be kept
-out of a plain `docker run` command.
+Secrets and environment-specific values (an API key, a domain name, a TLS
+contact email) still shouldn't be hardcoded into the committed
+`compose.yaml`. Those belong in an untracked `.env` file or an
+environment-specific override — Compose supports both — the same way
+they'd be kept out of a plain `docker run` command.

@@ -42,6 +42,6 @@ async def health():
     return {"status": "ok"}
 ```
 
-Deliberately nothing else yet (no models, no dependency injection, no error
-handling) — that depth is Phase 2. Phase 1 is only about proving the
-operational path: code -> container -> reachable server.
+Deliberately nothing else yet — no models, no dependency injection, no
+error handling. Just enough to prove the operational path: code ->
+container -> reachable server.

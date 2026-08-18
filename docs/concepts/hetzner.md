@@ -53,9 +53,9 @@ The entities you'll see in the console sidebar, and what each is for:
   ([source](https://docs.hetzner.com/cloud/api/getting-started/generating-api-token/)).
 - **Volumes, Load Balancers, Networks, Snapshots, Placement Groups** —
   additional infrastructure you can attach to a server at creation time or
-  later (extra block storage, private networking, backups, etc). None of
-  these are needed for Phase 1's scope — noted here so the names are
-  recognizable, not because they're being used yet.
+  later (extra block storage, private networking, backups, etc). Not
+  covered in depth here — noted so the names are recognizable when they
+  show up in the console sidebar.
 
 ## What creating a server actually involves
 
@@ -77,21 +77,3 @@ in a project, **Servers → Add server**, then choose:
 
 Hetzner provisions the server in under a minute; the public IPv4 shows up
 on the server's overview page once it's ready.
-
-## What Phase 1 actually needs from this
-
-Per `docs/progress.md`, Phase 1's remaining Hetzner steps are: create the
-VM, harden it (SSH key-only login, non-root user, Hetzner Cloud Firewall),
-install Docker + Compose, deploy, verify it's reachable, then add Caddy +
-sslip.io for HTTPS. Mapping that onto the entities above:
-
-- One **Project** (new, dedicated to this project).
-- One **Server** (small type is enough — this is a learning demo, not a
-  production workload).
-- One **SSH Key**, added at creation time, so there's no mailed root
-  password to deal with.
-- One **Firewall**, restricting inbound traffic to just SSH (22) and
-  whatever port the app/Caddy needs — matching the "only 22 and the app
-  port open" scope already decided in `docs/journal.md`.
-- No Volumes, Load Balancers, private Networks, or Snapshots — out of
-  scope for Phase 1.
