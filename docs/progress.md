@@ -17,11 +17,14 @@ decisions, see `docs/journal.md`. For tool-specific explanations, see
 - [x] Dockerfile written: multi-layer `uv sync` caching, non-root user with pinned UID/GID
 - [x] Docker image built and tested locally (`/health` reachable, confirmed running as non-root)
 - [x] `docs/concepts/uv.md`, `docs/concepts/fastapi.md`, `docs/concepts/docker.md` written
+- [x] Decided to use Docker Compose instead of raw `docker run`, for local dev and the Hetzner deployment
+- [x] `compose.yaml` added for local dev (single `app` service), tested with `docker compose up`/`down`
+- [x] `docs/concepts/docker-compose.md` written
 - [ ] Create the Hetzner Cloud VM (guided walkthrough)
 - [ ] Harden the VM: SSH key-only login, non-root user, Hetzner Cloud Firewall
-- [ ] Install Docker on the VM and deploy the container there (restart policy)
+- [ ] Install Docker + Docker Compose on the VM and deploy via `docker compose up -d` (restart policy)
 - [ ] Verify the app is reachable from outside over the VM's IP
-- [ ] Add Caddy as a reverse proxy in front of the app
+- [ ] Add Caddy as a reverse proxy in front of the app, as a second service in the VM's `compose.yaml`
 - [ ] Point a sslip.io address at the VM and confirm HTTPS works end-to-end
 
 ## Phase 2 — FastAPI depth (not started)

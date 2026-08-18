@@ -7,7 +7,7 @@ over HTTPS.
 ## Content
 
 - A **FastAPI** app.
-- A **Dockerfile** to containerize it.
+- A **Dockerfile** to containerize it, run via **Docker Compose**.
 - An **asyncio**-based feature for concurrent HTTP handling.
 - Deployment setup for a **Hetzner Cloud VM**, served over HTTPS.
 
@@ -21,8 +21,16 @@ over HTTPS.
 
 ## Running locally
 
+Without Docker:
+
 ```bash
 uv run fastapi dev main.py
+```
+
+With Docker Compose:
+
+```bash
+docker compose up -d --build
 ```
 
 Then visit `http://127.0.0.1:8000/health`.

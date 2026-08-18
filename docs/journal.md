@@ -131,3 +131,58 @@ reads more like a progress report than a description of what's actually in
 the repository — changed it to a plain list of what's there instead, and
 moved the link to `docs/progress.md` under the Documentation section where
 it belongs.
+
+## 2026-08-18 — switching to Docker Compose, locally and on Hetzner
+
+Had been running the container directly with `docker build -t ... && docker
+run -d -p ...`, retyping the flags each time. Considered switching to
+Docker Compose (`docker compose up` / `docker compose down`) instead, and
+weighed whether it was worth the extra file.
+
+Landed on: yes, for both local dev and the eventual Hetzner deployment.
+Reasoning:
+
+- Locally, it removes the need to remember/retype multi-flag `docker run`
+  commands — the tradeoff is close to free, since `docker compose` ships as
+  part of Docker itself (no separate install), and the only real cost is
+  one more file (`compose.yaml`) that needs to stay in sync with the
+  Dockerfile if ports or env vars change.
+- On Hetzner, Phase 1's plan already has two containers that need to
+  coordinate: the app and Caddy as a reverse proxy in front of it (for
+  HTTPS via sslip.io — see the entry above). Compose is a natural fit for
+  declaring how multiple containers run together (shared network, restart
+  policies) instead of two separate `docker run` invocations kept
+  consistent by hand. Redeploying becomes `git pull && docker compose up -d
+  --build` rather than a manual stop/rm/run sequence per container.
+
+This changes the plan from "plain `docker run` on the VM" to "Docker
+Compose on the VM" — noted here since it affects the deployment steps still
+open in `docs/progress.md`.
+
+Added a root-level `compose.yaml` for local dev (single `app` service,
+building from the existing `Dockerfile`, port 8000 mapped, `restart:
+unless-stopped`). Verified with `docker compose up -d --build`, `curl
+http://127.0.0.1:8000/health`, and `docker compose down` — container and
+network both come up and tear down cleanly. The Dockerfile itself didn't
+need to change; Compose just orchestrates the image it already builds.
+
+The Hetzner-side `compose.yaml` (adding the Caddy service) is deferred
+until the VM step, since Caddy's config depends on having a real IP for
+the sslip.io address.
+
+## 2026-08-18 — documenting `restart: unless-stopped` instead of dropping it
+
+Question came up: does the local `compose.yaml` actually need `restart:
+unless-stopped`, given you start/stop the container yourself during local
+dev? Answer is no — it's a no-op locally, since it only matters when
+something other than you needs to bring the container back (a crash, or a
+machine reboot on a server nobody's watching).
+
+Considered removing it from the local file for that reason, but decided to
+keep it instead: the standing rule here is not to have unexplained config
+sitting in the codebase, so rather than drop it, added a short comment in
+`compose.yaml` pointing at the reasoning, plus the full explanation
+(including the crash/manual-stop/reboot distinction, and `unless-stopped`
+vs `always`) in `docs/concepts/docker-compose.md`. Keeping it also means
+the local file's shape matches what the Hetzner `compose.yaml` will need,
+instead of the two diverging on a setting that does matter there.

@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    # Not needed for local dev (you start/stop it yourself), kept so this
+    # file matches the Hetzner compose.yaml where it does matter — see
+    # docs/concepts/docker-compose.md.
+    restart: unless-stopped

@@ -85,3 +85,11 @@ not a direct quote from their documentation.
 docker exec <container> whoami   # should print: appuser
 docker exec <container> id       # should print: uid=1000(appuser) gid=1000(appuser)
 ```
+
+## Running it
+
+The project is run with Docker Compose rather than a raw `docker build` +
+`docker run` — see `docs/concepts/docker-compose.md` for why and how.
+Everything above about the Dockerfile itself (layers, the base image, the
+non-root user) still applies unchanged; Compose just orchestrates the same
+image.
