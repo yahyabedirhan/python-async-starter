@@ -186,3 +186,102 @@ sitting in the codebase, so rather than drop it, added a short comment in
 vs `always`) in `docs/concepts/docker-compose.md`. Keeping it also means
 the local file's shape matches what the Hetzner `compose.yaml` will need,
 instead of the two diverging on a setting that does matter there.
+
+## 2026-08-18 — Hetzner project + VM created, SSH hardening done
+
+Before touching the console, wrote `docs/concepts/hetzner.md` covering the
+account/project relationship and the entities relevant to Phase 1
+(Servers, SSH Keys, Firewalls, API Tokens), sourced from Hetzner's own
+docs. Also did a plain-language recap of how SSH key pairs work
+(private key never leaves your machine, public key is what gets uploaded)
+and of inbound vs. outbound traffic, since both were being used
+"blindly" otherwise.
+
+**What got created**: one Hetzner project, one server —
+`ubuntu-4gb-fsn1-1` (Hetzner's auto-generated name: Ubuntu, 4GB, Falkenstein
+datacenter), Ubuntu 26.04, 2 vCPU / 4GB RAM / 40GB SSD, x86 (Intel, not
+ARM64), public IPv4 + IPv6, no private network. Cost: $7/month.
+
+**Deliberately left unset** at creation time, each for a specific reason:
+- **Backups** — extra cost, and already listed as an explicitly deferred
+  gap for Phase 1 in this journal's "production-readiness scope" entry.
+- **Placement Group** — only useful for spreading *multiple* servers
+  across physical hardware for failure isolation; meaningless with one
+  server.
+- **Labels** — organizational/filtering metadata, not needed yet with a
+  single server and (soon) a single firewall.
+- **Cloud-init / cloud config** — could have scripted the whole hardening
+  step below automatically on first boot, but skipped on purpose: the
+  point of doing this walkthrough by hand once is to actually understand
+  each step, not have it happen invisibly. Worth revisiting for
+  automation once these steps are already understood (maybe Phase 4).
+
+One firewall-related sequencing question came up: unlike SSH keys
+(which must be attached at server-creation time and can't be added after
+via the console), Hetzner Cloud Firewalls can be attached to a server at
+any point after it's created — so the plan is to create the VM first and
+attach a firewall separately, not block VM creation on having a firewall
+ready.
+
+**SSH hardening, done directly on the VM** (see
+`docs/concepts/hetzner.md` for why each piece matters):
+1. Connected as `root` first (the only user Hetzner's base Ubuntu image
+   has), confirmed key-based login worked with no password prompt.
+2. Created a non-root user with `adduser`, added it to the `sudo` group.
+3. Copied `root`'s `authorized_keys` file into the new user's `~/.ssh/`,
+   fixed ownership (`chown`) and permissions (`chmod 700` on the
+   directory, `600` on the file — SSH silently refuses overly-permissive
+   key files).
+4. Verified the new user could log in via SSH (key-based, no password)
+   and that `sudo whoami` worked (prompts for the account's local
+   password, separate from SSH auth entirely).
+5. Edited `/etc/ssh/sshd_config`: `PermitRootLogin no`,
+   `PasswordAuthentication no`. Restarted `sshd`.
+6. Verified, with the original root session kept open as a safety net
+   until confirmed: the non-root user can still log in, and `ssh root@<ip>`
+   is now refused outright.
+
+Next: create the Hetzner Cloud Firewall (22 + app port only, matching the
+"only 22 and the app port open" scope decided earlier), attach it to the
+VM, then install Docker + Compose there and deploy.
+
+## 2026-08-18 — firewall, Docker install, first deploy to the VM
+
+**Firewall**: created in the console, inbound rules for TCP 22 (SSH) and
+TCP 8000 (the app's port, matching `EXPOSE 8000`/`compose.yaml` — will
+swap for 80/443 once Caddy is added), inbound ICMP also allowed (so `ping`
+works — the diagnostic convenience outweighs the minor scan-resistance
+lost by allowing it). Outbound left at its default (allowed). Attached
+directly to the server.
+
+**Docker + Compose install**: followed Docker's official Ubuntu install
+guide
+([docs.docker.com/engine/install/ubuntu](https://docs.docker.com/engine/install/ubuntu/))
+— added Docker's APT repository and GPG key, installed
+`docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+docker-compose-plugin`. Added the non-root user to the `docker` group
+(`usermod -aG docker $USER`) so Docker commands don't need `sudo` — same
+idea as the earlier `sudo` group addition. Installed versions: Docker
+29.7.2, Compose 5.5.0.
+
+One snag: ran a Docker command in the same SSH session the `usermod` was
+run in, and got "permission denied ... docker.sock" — group membership
+changes don't apply to an already-open session, only new ones. Fixed by
+disconnecting and reconnecting over SSH.
+
+**First deploy**: cloned the public GitHub repo directly onto the VM
+(`git clone https://github.com/yahyabedirhan/python-async-starter.git`),
+then ran the exact same `docker compose up -d --build` already used
+locally — no VM-specific compose file needed yet, since Caddy (the only
+planned VM-specific addition) isn't in the picture until the HTTPS step.
+
+**Verified end to end**: `curl http://127.0.0.1:8000/health` from inside
+the VM, and `curl http://167.233.107.219:8000/health` from a laptop
+outside the VM — both returned `{"status":"ok"}`. The external check is
+the one that actually proves the whole chain: Docker Compose running the
+container correctly, the container's port reaching the host, and the
+Hetzner firewall rule correctly allowing port 8000 in.
+
+Remaining for Phase 1: add Caddy as a second service in a VM-specific
+`compose.yaml`, and point a sslip.io address at the VM to get HTTPS
+working end-to-end.

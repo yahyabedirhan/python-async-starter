@@ -20,10 +20,14 @@ decisions, see `docs/journal.md`. For tool-specific explanations, see
 - [x] Decided to use Docker Compose instead of raw `docker run`, for local dev and the Hetzner deployment
 - [x] `compose.yaml` added for local dev (single `app` service), tested with `docker compose up`/`down`
 - [x] `docs/concepts/docker-compose.md` written
-- [ ] Create the Hetzner Cloud VM (guided walkthrough)
-- [ ] Harden the VM: SSH key-only login, non-root user, Hetzner Cloud Firewall
-- [ ] Install Docker + Docker Compose on the VM and deploy via `docker compose up -d` (restart policy)
-- [ ] Verify the app is reachable from outside over the VM's IP
+- [x] `docs/concepts/hetzner.md` written (projects, servers, SSH keys, firewalls, API tokens)
+- [x] Hetzner project + VM created (`ubuntu-4gb-fsn1-1`, Ubuntu 26.04, 2 vCPU / 4GB / 40GB, Falkenstein, x86)
+- [x] SSH key uploaded at creation, confirmed key-based login as `root` works
+- [x] Non-root sudo user created, SSH key copied over, confirmed login + `sudo` both work
+- [x] Root SSH login and password authentication disabled (`sshd_config`), confirmed root login is now refused
+- [x] Create the Hetzner Cloud Firewall (22 + app port only) and attach it to the VM
+- [x] Install Docker + Docker Compose on the VM and deploy via `docker compose up -d` (restart policy)
+- [x] Verify the app is reachable from outside over the VM's IP
 - [ ] Add Caddy as a reverse proxy in front of the app, as a second service in the VM's `compose.yaml`
 - [ ] Point a sslip.io address at the VM and confirm HTTPS works end-to-end
 
