@@ -59,9 +59,12 @@ revisiting.
 
 - **Firewalls**: attached to a server, filter inbound traffic. Inbound is
   blocked by default unless a rule allows it; outbound is allowed by
-  default. For this project, the rule opens TCP **22** (SSH) and TCP
-  **8000** (the app's port) — not "TCP 12," 22 is the standard port SSH
-  listens on.
+  default. Started with TCP **22** (SSH) and TCP 8000 (the app's port)
+  open — not "TCP 12," 22 is the standard port SSH listens on. Once Caddy
+  went in front of the app, swapped 8000 for TCP **80** and **443**
+  instead, since nothing should reach the app directly anymore.
+
+- **The server itself**: 2 vCPU, 4GB RAM, running 24/7, $7/month.
 
 - **Rescaling**: Hetzner supports resizing a server's vCPU/RAM after
   creation — no need to destroy and recreate a server to change its size.
@@ -115,3 +118,41 @@ revisiting.
   session doesn't pick up the new group membership — hit "permission
   denied" against the Docker socket until reconnecting with a new SSH
   session.
+
+### HTTPS, Caddy, sslip.io, and Let's Encrypt
+
+- **"HTTPS" is really two separate problems**: naming (turning an IP into
+  something reachable by name) and trust/encryption (proving who you're
+  talking to, and keeping the traffic private). sslip.io solves the first
+  one for free, without buying a domain — it's not a redirect, it's just
+  DNS: the IP is literally spelled out in the hostname
+  (`167-233-107-219.sslip.io`), so looking it up returns that exact IP.
+  Let's Encrypt solves the second one, and Caddy is the piece that
+  actually uses both — it's the reverse proxy that terminates HTTPS on
+  443 and forwards the request internally to the app.
+
+- **Once Caddy was added, the app stopped being reachable directly.**
+  Port 8000 isn't exposed to the outside anymore — Caddy talks to the app
+  over Docker Compose's internal network, by its service name (`app`),
+  not through any port opened to the internet. Only Caddy sits on the
+  public-facing ports (80 and 443) now.
+
+- **What a certificate actually proves**: not "I own this domain" in any
+  legal sense — just "I control the server this domain currently resolves
+  to." There are two separate key pairs involved, easy to mix up: an
+  **account key** (used to sign every request Caddy sends to Let's
+  Encrypt — this part really is cryptographic signing) and a separate
+  **certificate key** (whose public half ends up in the actual TLS
+  certificate browsers use). The domain-control proof itself isn't a
+  signed file Let's Encrypt verifies, though — it's simpler than that:
+  Let's Encrypt gives Caddy a random token, Caddy publishes that token
+  plus a hash of its account key at a specific URL on the domain, and
+  Let's Encrypt just fetches that URL and checks the value matches
+  exactly. Only the real account-key holder could ever produce the
+  correct value, which is what makes the check meaningful.
+
+- **Certificates last 90 days, but Caddy renews well before that.** It
+  checks in the background roughly every 10 minutes and renews once a
+  cert has about a third of its lifetime left — around day 60, not day
+  90 — so there's always a safety buffer if a renewal attempt needs to
+  retry. No downtime during renewal either way.
