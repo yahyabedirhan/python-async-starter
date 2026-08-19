@@ -156,3 +156,32 @@ revisiting.
   cert has about a third of its lifetime left — around day 60, not day
   90 — so there's always a safety buffer if a renewal attempt needs to
   retry. No downtime during renewal either way.
+
+## 2026-08-19
+
+### Load testing with `hey`
+
+- **`hey`** is a small CLI for load-testing an HTTP endpoint. Two of its
+  main parameters: `-z` (how long to run the test) and `-c` (how many
+  concurrent requests to keep in flight at once).
+
+- Ran it against `/health`: `hey -z 30s -c 50 https://<domain>/health`.
+  Key numbers it reported — fastest request ~40ms, slowest ~200ms,
+  average ~60ms, and a sustained throughput of ~775 requests/sec.
+
+- The **response time histogram** shows the actual distribution, not just
+  an average — most requests landed clustered together in the low tens of
+  milliseconds, which is a much more useful picture than a single average
+  number, since an average alone can hide a slow tail. The **75th
+  percentile** (~68ms) is a good single reference point: "3 out of 4
+  requests finish this fast or faster."
+
+- It also breaks a single request down into phases (DNS lookup,
+  connecting, writing the request, waiting for the response, reading the
+  response) — useful for seeing *where* time is actually being spent,
+  rather than just the total.
+
+- This'll be a useful tool going forward, especially once async IO
+  (Phase 3) is in the picture — a good way to actually measure whether a
+  concurrent version of something is faster than a sequential one,
+  instead of just assuming it.
