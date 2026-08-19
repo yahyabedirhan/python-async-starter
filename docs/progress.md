@@ -28,8 +28,11 @@ decisions, see `docs/journal.md`. For tool-specific explanations, see
 - [x] Create the Hetzner Cloud Firewall (22 + app port only) and attach it to the VM
 - [x] Install Docker + Docker Compose on the VM and deploy via `docker compose up -d` (restart policy)
 - [x] Verify the app is reachable from outside over the VM's IP
-- [ ] Add Caddy as a reverse proxy in front of the app, as a second service in the VM's `compose.yaml`
-- [ ] Point a sslip.io address at the VM and confirm HTTPS works end-to-end
+- [x] Add Caddy as a reverse proxy in front of the app, as a second service in the VM's `compose.yaml`
+- [x] Point a sslip.io address at the VM and confirm HTTPS works end-to-end
+
+Phase 1 complete: `https://167-233-107-219.sslip.io/health` returns
+`{"status":"ok"}` over real, trusted HTTPS.
 
 ## Phase 2 — FastAPI depth (not started)
 

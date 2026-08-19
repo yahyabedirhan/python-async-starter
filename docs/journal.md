@@ -285,3 +285,62 @@ Hetzner firewall rule correctly allowing port 8000 in.
 Remaining for Phase 1: add Caddy as a second service in a VM-specific
 `compose.yaml`, and point a sslip.io address at the VM to get HTTPS
 working end-to-end.
+
+## 2026-08-18 — Caddy + sslip.io: HTTPS working, Phase 1 complete
+
+Before touching config, wrote three concept docs: `docs/concepts/caddy.md`
+and `docs/concepts/sslip-io.md` (tool-specific, sourced from their own
+official docs), plus `docs/concepts/https-fundamentals.md` — a broader
+write-up of the actual problem space (naming vs. trust/encryption, SSL
+vs. TLS, DV/OV/EV, ACME, the traditional manual cert workflow, and
+alternatives at each layer), since the three tools together were
+initially confusing as a pile of unrelated names.
+
+While writing those, corrected a structural mistake: the concept docs had
+started referencing `docs/progress.md` / `docs/journal.md` and specific
+phase numbers, creating a two-way dependency between the concept docs and
+the phase-tracking docs. Fixed by stripping all such references back out
+— concept docs should only ever be pointed *into* from phase docs, never
+the other way around, so they stay reusable on their own.
+
+**Implementation**: rather than editing the existing `compose.yaml`
+directly, added a separate `compose.prod.yaml` override file — Caddy only
+makes sense once a real domain exists (the VM's sslip.io hostname), so it
+has no reason to touch local dev. `compose.prod.yaml` adds a `caddy`
+service (official `caddy:2` image, ports 80/443 + 443/udp for HTTP/3, a
+mounted `Caddyfile`, and two named volumes — `caddy_data` for the
+certificate itself, `caddy_config` for Caddy's runtime state — both
+needing to persist across restarts so Caddy doesn't re-request a
+certificate every time the container recreates), and clears the `app`
+service's direct `8000:8000` port publish (`ports: []`), since nothing
+external should reach the app directly anymore — only through Caddy.
+
+`Caddyfile` is a single site block: `167-233-107-219.sslip.io` (the
+project's VM IP with dots swapped for hyphens, per sslip.io's own
+convention) reverse-proxied to `app:8000` — `app` resolves via Compose's
+own internal DNS, no hardcoded container IP needed.
+
+**Firewall**: updated in the console — removed the TCP 8000 rule (no
+longer needed, nothing external hits the app port directly now), added
+TCP 80 and TCP 443. 22 and ICMP unchanged.
+
+**Deploy**: committed and pushed the new files, `git pull`ed on the VM,
+then brought it up with both compose files merged:
+
+```bash
+docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+```
+
+Caddy obtained a certificate from Let's Encrypt automatically on startup
+— no manual ACME steps, no certbot, nothing beyond having the domain in
+the `Caddyfile` and ports 80/443 reachable.
+
+**Verified**: `curl https://167-233-107-219.sslip.io/health` returns
+`{"status":"ok"}` over real, browser-trusted HTTPS, with no port needed in
+the URL (443 is HTTPS's implicit default) and no certificate warnings.
+
+**Phase 1 is done.** FastAPI app, containerized, deployed to a hardened
+Hetzner VM, reachable over real HTTPS with a free automatically-renewing
+certificate — no domain purchase, no manual cert management. Next up per
+`docs/progress.md`: Phase 2, FastAPI depth (routing, request/response
+models, dependency injection, error handling), still fully synchronous.
