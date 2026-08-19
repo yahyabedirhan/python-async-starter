@@ -80,6 +80,44 @@ project's plan handles one side:
   thing that makes "automatic HTTPS" possible — Caddy has an ACME client
   built in, so it can talk to Let's Encrypt directly.
 
+## What ACME actually proves, and how
+
+A domain-validated certificate doesn't prove identity or ownership in any
+legal sense — it proves one specific, narrower thing: that whoever is
+requesting the certificate is also the one actually running the server
+that the domain currently resolves to. The most common way Caddy
+demonstrates that is the **HTTP-01 challenge**, a public, standardized
+part of the ACME protocol (RFC 8555), not something proprietary to either
+side:
+
+1. Caddy asks Let's Encrypt for a certificate, sending the domain name
+   and its own **account key** — a key pair Caddy generated the first
+   time it registered with Let's Encrypt, separate from the certificate's
+   own key.
+2. Let's Encrypt replies with a random, one-time **token**.
+3. Caddy combines that token with a hash of its account key (this
+   combined value is called a "key authorization") and serves it at a
+   specific, predictable URL on the domain:
+   `http://<domain>/.well-known/acme-challenge/<token>`.
+4. Let's Encrypt makes its own independent request to that exact URL —
+   it doesn't trust anything Caddy told it, it goes and checks itself —
+   and compares the response against what it expects. If it matches, it
+   signs and issues the certificate.
+
+The reason step 4 actually proves something: the account key half of the
+key authorization never leaves Caddy's own private state, so only the
+server that holds that key could ever produce the matching value. A
+different server, sitting at a different IP, has no way to answer
+correctly even if it somehow saw the token — it doesn't have Caddy's
+account key. So the guarantee isn't "this person legally owns this
+domain," it's "whatever machine is actually answering requests for this
+domain right now is the same machine that's asking for the certificate."
+That's also exactly why pointing a domain at the wrong server (or a
+domain that doesn't resolve to your own server at all, like a mismatched
+sslip.io hostname) makes certificate issuance fail cleanly, rather than
+succeed incorrectly: the party requesting the cert and the party actually
+answering on that domain have to be provably the same machine.
+
 ## Ports 80 and 443
 
 A port is just a number identifying which service on a machine a
