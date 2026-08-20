@@ -12,10 +12,11 @@ tool. It manages:
 
 ## Key files it creates/manages
 
-- `pyproject.toml` — project metadata and dependency list
-- `uv.lock` — exact resolved versions, committed to git for reproducibility
-- `.python-version` — pins which Python version the project uses
-- `.venv/` — the actual virtual environment (not committed)
+- `pyproject.toml` holds project metadata and the dependency list.
+- `uv.lock` holds exact resolved versions, committed to git for
+  reproducibility.
+- `.python-version` pins which Python version the project uses.
+- `.venv/` is the actual virtual environment (not committed).
 
 ## Core commands used so far
 
@@ -26,26 +27,26 @@ tool. It manages:
 | `uv run <command>` | Run a command inside the project's managed virtual environment (creates it if missing) |
 | `uv sync` | Make `.venv` match `pyproject.toml`/`uv.lock` exactly (install missing, remove extraneous) |
 
-## `uv sync` — deterministic environment installs
+## `uv sync`: deterministic environment installs
 
-`uv sync` doesn't add or resolve anything new — it makes `.venv` match
+`uv sync` doesn't add or resolve anything new. It makes `.venv` match
 `pyproject.toml`/`uv.lock` exactly, installing what's missing and removing
-what shouldn't be there. npm comparison: it's `npm ci`, not `npm install` —
-the lockfile is the source of truth, not something to be updated.
+what shouldn't be there. npm comparison: it's `npm ci`, not `npm install`,
+since the lockfile is the source of truth, not something to be updated.
 
 Where it fits with the commands above: `uv add` and `uv run` both call
 `sync` internally when needed (after adding a dependency, or before running
-if the lockfile changed) — `uv sync` is just the explicit, standalone form,
+if the lockfile changed). `uv sync` is just the explicit, standalone form,
 useful when you want the environment updated without also running a
 command (e.g. in a Dockerfile, or after pulling someone else's lockfile
 changes).
 
 Flags used in this project's Dockerfile:
 
-- **`--locked`** — fail instead of silently re-resolving if `uv.lock` is
+- **`--locked`** fails instead of silently re-resolving if `uv.lock` is
   out of sync with `pyproject.toml`. A build should fail loudly rather than
   drift to different dependency versions than what's committed.
-- **`--no-install-project`** — install only the dependencies, skip
+- **`--no-install-project`** installs only the dependencies, skipping
   installing our own code as a package. Used for Docker layer caching: sync
   once with just `pyproject.toml`/`uv.lock` copied in (cached unless
   dependencies change), then copy the actual source and `sync` again
@@ -53,9 +54,9 @@ Flags used in this project's Dockerfile:
 
 ## Running things: always `uv run`
 
-`uv run <command>` executes inside the project's `.venv` — the pinned Python
-version, with all `uv add`ed dependencies available — without manually
-activating anything. Examples used in this project:
+`uv run <command>` executes inside the project's `.venv`, the pinned
+Python version, with all `uv add`ed dependencies available, without
+manually activating anything. Examples used in this project:
 
 | Goal | Command |
 |---|---|
@@ -66,65 +67,65 @@ activating anything. Examples used in this project:
 
 It also auto-syncs the environment first if `pyproject.toml`/`uv.lock`
 changed since the last run, so you can't accidentally run against a stale
-environment — this is why `uv run` is preferred over manually
+environment. This is why `uv run` is preferred over manually
 `source .venv/bin/activate`-ing.
 
-## `uv run fastapi dev` — how it resolves (npm comparison)
+## `uv run fastapi dev`: how it resolves (npm comparison)
 
 If you're coming from npm, `uv run <cli>` maps to `npx <cli>`, **not** to
 `npm run <script>`:
 
 - `npm run test` works because *you* defined a `"scripts": {"test": ...}`
   entry in your own `package.json`. There's no equivalent custom entry for
-  `fastapi` in our `pyproject.toml` — we never defined it.
+  `fastapi` in our `pyproject.toml`, since we never defined it.
 - Instead, the **`fastapi` package itself** declares, in its own packaging
   metadata (`[console_scripts]`, the Python-packaging equivalent of a
-  library's `"bin"` field in *its* `package.json` — e.g. how ESLint ships an
+  library's `"bin"` field in *its* `package.json`, e.g. how ESLint ships an
   `eslint` binary), that it provides a command:
   ```
   fastapi = fastapi.cli:main
   ```
 - When you install it (`uv add "fastapi[standard]"`), the installer
-  generates a real executable at `.venv/bin/fastapi` — same idea as npm
+  generates a real executable at `.venv/bin/fastapi`, the same idea as npm
   generating `node_modules/.bin/eslint` on install.
 - `uv run fastapi dev main.py` puts `.venv/bin` on `PATH` for that one
-  command and runs it — functionally `npx fastapi dev main.py`.
-- `dev` isn't a separate script — it's just an argument the `fastapi`
+  command and runs it, functionally `npx fastapi dev main.py`.
+- `dev` isn't a separate script. It's just an argument the `fastapi`
   program parses internally (built with a CLI library called Typer), same
   as `git branch` (`branch` is an arg `git` parses) or `eslint --fix`.
 
 Docs: subcommands (`dev`/`run`/`deploy`) at
 [fastapi.tiangolo.com/fastapi-cli](https://fastapi.tiangolo.com/fastapi-cli/);
 the entry-point declaration itself lives in FastAPI's own `pyproject.toml`
-under `[project.scripts]` — Python's equivalent of npm's `"bin"` field.
+under `[project.scripts]`, Python's equivalent of npm's `"bin"` field.
 
 Note: Python packaging *does* have an equivalent of npm's `"scripts"` table
-too — `[project.scripts]` in our **own** `pyproject.toml` — but that's for
+too, `[project.scripts]` in our **own** `pyproject.toml`, but that's for
 exposing installable commands from a package we publish, not arbitrary task
 shortcuts. For npm-style ad-hoc task running, Python projects typically
-reach for a separate tool (e.g. `just`, `invoke`) — not something `uv`
+reach for a separate tool (e.g. `just`, `invoke`), not something `uv`
 provides natively, and not something we need here.
 
 ## Project Python vs. system Python
 
 These are two separate things:
 
-- **System `python3`** (what `python3 --version` shows in your shell) — on
+- **System `python3`** (what `python3 --version` shows in your shell): on
   macOS this is Apple's own bundled Python, shared machine-wide.
   Independent of any project.
-- **Project Python** — `uv` downloads and manages its own interpreters
+- **Project Python**: `uv` downloads and manages its own interpreters
   (in `~/.local/share/uv/python/...`), pinned per-project via
   `.python-version` / `requires-python` in `pyproject.toml`. `uv run` always
   uses this one, never the system one.
 
-This project pins **3.12** even though the system Python is 3.9.6. Reasons:
-3.9 is close to end-of-life (security support ends Oct 2025), and FastAPI's
-tooling assumes a current Python. Since `uv` manages its own interpreter
-entirely separately from the system one, there's no need to touch or
-upgrade the system Python at all — `uv init --python 3.12` downloads an
-isolated 3.12 with no side effects outside the project.
+This project pins **3.12** even though the system Python is 3.9.6. The
+reasons: 3.9 is close to end-of-life (security support ends Oct 2025), and
+FastAPI's tooling assumes a current Python. Since `uv` manages its own
+interpreter entirely separately from the system one, there's no need to
+touch or upgrade the system Python at all. `uv init --python 3.12`
+downloads an isolated 3.12 with no side effects outside the project.
 
-**Should you upgrade your system Python to match?** Generally, no — leave
+**Should you upgrade your system Python to match?** Generally, no. Leave
 it alone. macOS tooling sometimes relies on the specific bundled Python, so
 replacing it is a common way to break unrelated things for no benefit: every
 project's actual Python is decided by its own `uv`/`.python-version` pin,

@@ -13,10 +13,10 @@ over HTTPS.
 
 ## Documentation
 
-- [`docs/progress.md`](docs/progress.md) — current status of the project.
-- [`docs/journal.md`](docs/journal.md) — a running log of decisions made on
+- [`docs/progress.md`](docs/progress.md) gives the current status of the project.
+- [`docs/journal.md`](docs/journal.md) is a running log of decisions made on
   this project, and why.
-- [`docs/concepts/`](docs/concepts) — short, plain-language explainers for
+- [`docs/concepts/`](docs/concepts) has short, plain-language explainers for
   each tool used (uv, FastAPI, Docker, ...).
 
 ## Running locally

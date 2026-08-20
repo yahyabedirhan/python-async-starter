@@ -17,7 +17,7 @@ a whole new one.
 - **Layers**: every line in a Dockerfile (`RUN`, `COPY`, etc.) creates a
   cached layer. If a layer's inputs haven't changed, Docker skips
   re-running it on the next build. That's why we install dependencies in a
-  separate step before copying our code — see `docs/concepts/uv.md`. It
+  separate step before copying our code, see `docs/concepts/uv.md`. It
   means editing `main.py` doesn't force Docker to reinstall everything.
 - **`EXPOSE 8000`**: this just documents which port the app listens on. It
   doesn't actually make the port reachable by itself.
@@ -53,15 +53,15 @@ USER appuser
 We picked the numbers 1000 for the user ID and group ID on purpose, instead
 of letting the system pick automatically. That way the ID stays the same
 every time we rebuild the image, even if the base image changes later. The
-name `appuser` doesn't mean anything special — Docker's own example in
+name `appuser` doesn't mean anything special. Docker's own example in
 their docs just uses `postgres` as the name, since that matches the service
 they were containerizing.
 
 ## Do these user ID numbers need to be unique across projects?
 
 No. This works differently than something like a network port. Ports are
-exclusive — only one program on your machine can use port 8000 at a time,
-which is why different projects need different port numbers. User IDs
+exclusive, since only one program on your machine can use port 8000 at a
+time, which is why different projects need different port numbers. User IDs
 don't work that way. They're not a limited, shared resource. Many
 containers can each use the number 1000 as their internal user ID at the
 same time, with zero conflict, because each container has its own isolated
@@ -89,7 +89,7 @@ docker exec <container> id       # should print: uid=1000(appuser) gid=1000(appu
 ## Running it
 
 The project is run with Docker Compose rather than a raw `docker build` +
-`docker run` — see `docs/concepts/docker-compose.md` for why and how.
+`docker run`. See `docs/concepts/docker-compose.md` for why and how.
 Everything above about the Dockerfile itself (layers, the base image, the
 non-root user) still applies unchanged; Compose just orchestrates the same
 image.

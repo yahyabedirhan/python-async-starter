@@ -4,7 +4,7 @@ A simple checklist of what's done and what's left. For the reasoning behind
 decisions, see `docs/journal.md`. For tool-specific explanations, see
 `docs/concepts/`.
 
-## Phase 1 — operational foundation (FastAPI + Docker + Hetzner, plain HTTPS)
+## Phase 1: operational foundation (FastAPI + Docker + Hetzner, plain HTTPS)
 
 - [x] Git repo initialized
 - [x] Decided the four-phase plan (this file's structure)
@@ -34,18 +34,18 @@ decisions, see `docs/journal.md`. For tool-specific explanations, see
 Phase 1 complete: `https://167-233-107-219.sslip.io/health` returns
 `{"status":"ok"}` over real, trusted HTTPS.
 
-## Phase 2 — FastAPI depth (not started)
+## Phase 2: FastAPI depth (not started)
 
-Routing, request/response models, dependency injection, error handling.
-Still fully synchronous — no async concepts introduced yet.
+Routing, request/response models, dependency injection, and error handling.
+It's still fully synchronous, since no async concepts have been introduced yet.
 
-## Phase 3 — async IO (not started)
+## Phase 3: async IO (not started)
 
 Introduce the concurrent URL-checker feature using `asyncio.gather` +
 `httpx.AsyncClient`. Compare against a sequential version to make the
 speedup visible.
 
-## Phase 4 — redeploy + CI/CD (not started)
+## Phase 4: redeploy + CI/CD (not started)
 
 Redeploy the fuller app. Add a GitHub Actions workflow to auto-deploy on
 push to `main`. Revisit Docker/Hetzner setup if needed at that point.

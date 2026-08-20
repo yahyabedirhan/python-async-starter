@@ -6,8 +6,8 @@ Use Conventional Commits prefixes: `feat:`, `fix:`, `docs:`, `style:`,
 `refactor:`, `perf:`, `test:`, `build:`, `ci:`, `chore:`, `revert:`.
 
 - Subject line (prefix + summary): max 50 characters.
-- Always lowercase — even proper nouns/product names (e.g. "fastapi", not
-  "FastAPI").
+- Always lowercase, including proper nouns and product names (e.g.
+  "fastapi", not "FastAPI").
 - If more detail is needed, add a blank line then bullet points:
 
 ```
@@ -22,19 +22,44 @@ fix: short summary here
 Whenever a recommendation, command, or pattern comes from an external
 source (official docs, a blog post, an MCP tool like Context7, etc.) rather
 than general knowledge, say so and link/name the exact source at the point
-of use — don't just state the recommendation. This lets the source be
+of use. Don't just state the recommendation. This lets the source be
 revisited later. If something instead comes from general/training
 knowledge rather than a fetched source, it's fine to say that too when it's
 relevant (e.g. the info may be stale).
 
-## Documentation style (docs/ folder)
+## Documentation style
 
-Write in plain, natural sentences — the way you'd explain something out
+Write in plain, natural sentences, the way you'd explain something out
 loud to a person, not compressed notes. Prefer several short sentences over
 one dense sentence packed with clauses. Avoid unexplained jargon; if a term
 is needed, explain it in plain words the first time it's used. Goal: it
 should be understandable half-asleep at 3am, not just technically correct.
 
 This applies to `docs/journal.md` and `docs/concepts/*.md`. It does not
-mean padding things out — stay focused, just don't sacrifice clarity for
+mean padding things out. Stay focused, but don't sacrifice clarity for
 brevity.
+
+### Voice and tone
+
+- Never use an em dash (—) anywhere in the project, especially `docs/` content.
+- Avoid the "label: item, item, item" construction, in section headings.
+- Keep sentence structure simple. Prefer ordinary subject-verb-object
+  sentences over dense or compressed labels.
+
+### Mermaid diagrams
+
+Don't add `<br/>` line breaks inside node text by default. Keep node
+labels short and let them sit on one line. Only wrap a label across lines
+if it genuinely holds multiple paragraphs or a long block of text that
+would otherwise be unreadable as one line, not as a routine habit.
+
+### Concept docs
+
+`docs/concepts/*.md` files must stay reusable on their own, independent of
+this specific project's plan. They should never mention phase numbers
+("Phase 1," "Phase 3," etc.), this project's roadmap, or "why this matters
+for this project" framing. References only go one direction: phase-tracking
+docs (`docs/journal.md`, `docs/progress.md`) can point into `docs/concepts/`,
+never the other way around. If a concept doc is tempted to explain why
+something matters for this project specifically, that explanation belongs
+in the journal or progress doc instead, with a link into the concept doc.
