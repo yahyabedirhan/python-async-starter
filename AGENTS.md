@@ -45,6 +45,19 @@ brevity.
 - Avoid the "label: item, item, item" construction, in section headings.
 - Keep sentence structure simple. Prefer ordinary subject-verb-object
   sentences over dense or compressed labels.
+- All headers, including the `#` document title, must be concise,
+  properly-named noun phrases, not conversational, vague, or
+  question-form labels, and not full sentences. Avoid headers like "The
+  problem: without an agreement, every pair needs custom glue," "What
+  this buys you, concretely," or "is the missing contract actually a
+  problem, and how Bun, Deno, Hono, and Elysia handle it." Prefer
+  something like "Why a shared contract is necessary" or "Benefits of a
+  shared contract" instead.
+- Don't use a colon explanator structure in headers (e.g. "JavaScript web
+  servers: WinterTC, Bun, Deno, Hono, and Elysia"). Keep the `#` document
+  title down to the short subject itself (e.g. "JavaScript web servers"),
+  and give `##` section headers a plain noun phrase, not a topic followed
+  by a colon and a list or clause.
 
 ### Mermaid diagrams
 

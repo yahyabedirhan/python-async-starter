@@ -188,3 +188,111 @@ revisiting.
   (Phase 3) is in the picture. It's a good way to actually measure
   whether a concurrent version of something is faster than a sequential
   one, instead of just assuming it.
+
+### Concurrency models
+
+- **The three models**
+  - One process per request.
+  - One thread per request, or a reused thread pool.
+  - A single-threaded event loop.
+- **The C10K problem**
+  - Handling ten thousand simultaneous connections on one machine.
+  - Thread-per-request struggles here, since each thread has a fixed
+    memory cost. The event loop model is the practical way to reach this
+    scale.
+- **Readiness notification**
+  - A file descriptor belongs to the I/O resource (a socket, a file),
+    not to a task. The kernel only ever tracks readiness for the fd
+    itself.
+  - The event loop is the bridge. It keeps its own table mapping each fd
+    to the task waiting on it, so when the kernel says "fd 9 is ready,"
+    the loop knows exactly which task to resume.
+  - This fd-to-callback mapping is a real, documented API: Python's
+    `loop.add_reader(fd, callback)`, and libuv's `uv_poll_start()`
+    underneath Node.
+  - Still to revisit: the epoll/kqueue mechanics themselves (interest
+    list, ready list) in more depth.
+- **Blocking doesn't burn CPU**
+  - "Blocking" means the OS scheduler takes a thread off the CPU
+    entirely while it waits. Per the `epoll_wait(2)` man page, the call
+    "will block until" an event, a signal, or a timeout.
+  - A blocking I/O call blocks the thread it runs on, not the CPU. The
+    freed-up CPU core can run any other runnable thread on the machine.
+  - That's the opposite of a busy-wait loop, which would pin a CPU core
+    at 100% while repeatedly checking "is it ready yet."
+
+### JavaScript event loop
+
+- **Task queue vs. microtask queue**
+  - Two queues: a task (macrotask) queue and a microtask queue.
+  - The microtask queue is a fast lane. It fully drains, including
+    anything it adds to itself, before the next macrotask runs.
+  - `setTimeout`/`setInterval` create macrotasks. Promises create
+    microtasks.
+- **Promises are eager**
+  - Calling an async function runs its body immediately, up to the first
+    `await`. Constructing `new Promise(...)` runs its executor
+    immediately too.
+  - Calling `resolve()` itself doesn't execute anything. It just settles
+    the promise and schedules any `.then()` callbacks as microtasks.
+- **Node's worker pool (libuv)**
+  - Node offloads certain blocking built-ins (DNS lookups, filesystem
+    reads, some `crypto`/`zlib` functions) to a background thread pool
+    called the libuv Worker Pool.
+  - This only covers Node's own curated list of built-ins, never custom
+    code.
+  - The synchronous versions (like `fs.readFileSync`) are deliberately
+    excluded. They block the main thread on purpose, meant for startup
+    scripts, not request handling.
+- **`worker_threads`**
+  - Running your own CPU-heavy code off the main thread needs the
+    separate `worker_threads` module, used explicitly.
+  - Node imposes no hard limit, but each worker is a full separate JS
+    engine instance, heavy, so Node's docs recommend a reused pool
+    rather than one worker per task.
+- **Deno, Bun, and WinterTC**
+  - Deno and Bun implement the standard Web Worker API instead of
+    Node's own `worker_threads` shape. None of the three ship a
+    built-in pool manager.
+  - Bun measures a large edge in worker message-passing: sending a 3MB
+    string via `postMessage` takes about 1.26µs on Bun versus about
+    304µs on Node.
+  - WinterTC (Ecma TC55) is a real effort to converge server-side JS
+    APIs across runtimes. `fetch()` is a completed example, stable in
+    Node since v21. The Worker API hasn't converged yet.
+
+### Python event loop
+
+- **One queue, not two**
+  - `asyncio` has a single FIFO ready queue, no separate microtask lane
+    like JavaScript.
+  - There's no rule like "a promise callback always beats a timer."
+    Whatever was scheduled first, or whose deadline arrives first, runs
+    first.
+- **Coroutines are lazy**
+  - Calling an `async def` function does nothing by itself. It only
+    creates a coroutine object, inert, not started.
+  - This is the opposite of JavaScript, where calling an async function
+    starts running it immediately.
+- **`await` vs. `create_task`**
+  - `await` drives a coroutine directly, right there. Use it when the
+    next line needs the result before it can continue.
+  - `create_task()` schedules a coroutine to start at the next loop
+    iteration, running concurrently in the background. Use it when the
+    result isn't needed right away.
+- **Low-level primitives**
+  - `call_soon`, `call_later`, and `call_at` are what `asyncio` is built
+    out of internally, not something to reach for in business logic.
+  - Python's own docs: "Application developers should typically use the
+    high-level asyncio functions... and should rarely need to reference
+    the loop object or call its methods."
+  - Day-to-day code lives at the `create_task()` / `await` / `gather()`
+    / `TaskGroup` level instead.
+- **GIL, concurrency vs. parallelism**
+  - The GIL means only one thread executes Python bytecode at a time,
+    even with several OS threads running.
+  - Parallelism (real simultaneous execution on different cores) needs
+    multiple processes, each with its own interpreter and its own GIL.
+  - Concurrency (interleaved progress, not necessarily simultaneous)
+    works within a single process either way: a thread pool, or
+    `asyncio`'s single-threaded event loop.
