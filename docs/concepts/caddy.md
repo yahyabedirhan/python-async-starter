@@ -42,7 +42,7 @@ reverse_proxy :9000
   listening on port 9000, the app's own port, whether that's on the same
   machine or a container reachable by name on the same Docker network.
 
-A domain obtained via sslip.io (see `docs/concepts/sslip-io.md`) works
+A domain obtained via sslip.io (see [docs/concepts/sslip-io.md](sslip-io.md)) works
 just as well as a purchased one for that first line, since Caddy only
 cares that the domain's DNS actually points at the server.
 

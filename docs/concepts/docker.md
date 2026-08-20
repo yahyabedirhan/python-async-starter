@@ -17,7 +17,7 @@ a whole new one.
 - **Layers**: every line in a Dockerfile (`RUN`, `COPY`, etc.) creates a
   cached layer. If a layer's inputs haven't changed, Docker skips
   re-running it on the next build. That's why we install dependencies in a
-  separate step before copying our code, see `docs/concepts/uv.md`. It
+  separate step before copying our code, see [docs/concepts/uv.md](uv.md). It
   means editing `main.py` doesn't force Docker to reinstall everything.
 - **`EXPOSE 8000`**: this just documents which port the app listens on. It
   doesn't actually make the port reachable by itself.
@@ -89,7 +89,7 @@ docker exec <container> id       # should print: uid=1000(appuser) gid=1000(appu
 ## Running it
 
 The project is run with Docker Compose rather than a raw `docker build` +
-`docker run`. See `docs/concepts/docker-compose.md` for why and how.
+`docker run`. See [docs/concepts/docker-compose.md](docker-compose.md) for why and how.
 Everything above about the Dockerfile itself (layers, the base image, the
 non-root user) still applies unchanged; Compose just orchestrates the same
 image.

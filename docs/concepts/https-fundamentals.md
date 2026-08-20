@@ -3,7 +3,7 @@
 This is a step back from any one tool, to lay out the actual problem being
 solved and where each piece (Caddy, sslip.io, Let's Encrypt) fits. It's
 general knowledge and background explanation, not tied to one fetched
-source, unlike `docs/concepts/caddy.md` and `docs/concepts/sslip-io.md`,
+source, unlike [docs/concepts/caddy.md](caddy.md) and [docs/concepts/sslip-io.md](sslip-io.md),
 which cite the specific tool docs.
 
 ## The real problem is actually two separate problems
@@ -202,5 +202,5 @@ Useful for recognizing the landscape:
   "you manage the cert" for "someone else's infrastructure sits between
   users and your server."
 
-See `docs/concepts/caddy.md` and `docs/concepts/sslip-io.md` for the
+See [docs/concepts/caddy.md](caddy.md) and [docs/concepts/sslip-io.md](sslip-io.md) for the
 tool-specific mechanics of how each piece is actually configured.

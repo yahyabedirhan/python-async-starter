@@ -45,7 +45,7 @@ spell out exactly how it decides what to do with each route
 
 So a route written as plain `def` doesn't run on the event loop at all.
 Starlette silently hands it off to a worker thread pool (the "one thread
-per task, OS-managed" model, see `docs/concepts/concurrency-models.md`),
+per task, OS-managed" model, see [docs/concepts/concurrency-models.md](concurrency-models.md)),
 so a slow blocking call inside it can't freeze every other in-flight
 request. A route written `async def` runs directly on the event loop,
 cooperatively, alongside every other in-flight `async def` route. FastAPI's

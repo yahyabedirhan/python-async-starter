@@ -7,7 +7,7 @@ it before now.
 
 ## The problem it solves
 
-Caddy's automatic HTTPS (see `docs/concepts/caddy.md`) needs a real domain
+Caddy's automatic HTTPS (see [docs/concepts/caddy.md](caddy.md)) needs a real domain
 name pointing at the server, since Let's Encrypt issues certificates for
 domain names, not bare IP addresses. Buying a domain is one way to get that, but
 it's unnecessary overhead when you just want HTTPS working on a server you
