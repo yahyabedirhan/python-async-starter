@@ -34,10 +34,17 @@ decisions, see `docs/journal.md`. For tool-specific explanations, see
 Phase 1 complete: `https://167-233-107-219.sslip.io/health` returns
 `{"status":"ok"}` over real, trusted HTTPS.
 
-## Phase 2: FastAPI depth (not started)
+## Phase 2: FastAPI depth
 
-Routing, request/response models, dependency injection, and error handling.
-It's still fully synchronous, since no async concepts have been introduced yet.
+- [x] Routing with path parameters (`/items/{item_id}`) and query parameters (`skip`/`limit`)
+- [x] Request/response models with Pydantic (`ItemCreate`, `Item`, `response_model`)
+- [x] Dependency injection with `Depends()` (reusable pagination params)
+- [x] Error handling with a custom exception + global `@app.exception_handler`
+- [x] `/items` CRUD (`POST`, `GET` list + detail, `PUT`, `DELETE`) implemented and tested end to end
+- [x] `docs/concepts/fastapi.md`, `docs/concepts/pydantic.md`, `docs/concepts/python-type-hints.md` updated; `docs/concepts/python-objects-and-dicts.md` added
+
+Phase 2 complete: still fully synchronous, no async concepts introduced yet,
+that's Phase 3's job.
 
 ## Phase 3: async IO (not started)
 
