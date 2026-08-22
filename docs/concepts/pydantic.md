@@ -41,6 +41,24 @@ validation logic is written in Rust" (same source as above). The actual
 validation work happens in compiled, non-Python code, which is why it's fast
 enough to run on every single request without becoming the bottleneck.
 
+## Getting a plain dict back out: `model_dump()`
+
+A `BaseModel` instance isn't a plain Python object with generic dict-like
+behavior. `model_dump()` is a method Pydantic itself adds to every
+`BaseModel` subclass, not something ordinary Python classes get for free.
+Per [Pydantic's own API docs](https://docs.pydantic.dev/latest/api/base_model/):
+
+> "Generate a dictionary representation of the model, optionally
+> specifying which fields to include or exclude."
+
+So `item.model_dump()` turns a model instance back into a plain `dict`,
+the reverse direction of what validation does when a dict comes in.
+Handing that dict's contents into another call with `**item.model_dump()`
+(Python's dictionary-unpacking syntax) is a common pattern for copying
+one model's fields into a new instance, similar in effect to spreading an
+object in JavaScript, but this is a Pydantic method, not something every
+Python object supports.
+
 ## How this feeds into FastAPI specifically
 
 One `class Item(BaseModel): name: str; price: float` declaration feeds four

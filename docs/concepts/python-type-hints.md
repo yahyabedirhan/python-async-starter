@@ -90,3 +90,36 @@ Python's approach (via type hints, and libraries like Pydantic that read
 them) avoids this duplication: the type hint you'd write for editor support
 anyway is the *same* declaration a validation library reads at run time.
 One declaration, not two vocabularies to keep in sync.
+
+## Types are runtime values in Python
+
+This is the fact that makes something like `response_model=list[Item]`
+possible as ordinary Python, not special FastAPI syntax. In Python, a
+class is itself an object that exists while the program runs, not just a
+compile-time label the language throws away. Per the
+[Python language reference](https://docs.python.org/3/reference/datamodel.html):
+
+> "Objects are Python's abstraction for data. All data in a Python
+> program is represented by objects or by relations between objects."
+
+And specifically for classes:
+
+> "Classes are callable. These objects normally act as factories for new
+> instances of themselves..."
+
+So `Item` (a class) is a real object sitting in memory, the same way a
+string or a number is. It can be passed as a function argument, assigned
+to a variable, stored in a list, exactly like any other value. That's why
+`response_model=list[Item]` type-checks and runs fine: `list[Item]` isn't
+being "used as a type" in some special way, it's just an ordinary value
+being passed as a keyword argument, the same as passing `42` or `"hello"`
+would be.
+
+This is a genuine difference from TypeScript, where types are erased
+entirely before the code ever runs; there's no `SomeInterface` object you
+could pass around as a value at runtime, because by the time the code
+executes, the type annotations don't exist anymore. Python's annotations
+stick around and can be inspected, passed, and acted on by code like
+Pydantic or FastAPI, precisely because the things they refer to (classes)
+were always real, live objects to begin with, not something the language
+invented purely for a type-checking pass and threw away afterward.
